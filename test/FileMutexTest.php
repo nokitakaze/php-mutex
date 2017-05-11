@@ -121,15 +121,13 @@
             }
             chmod($mutex->filename, 7 << 6);
             //
-            $lock_acquired = new \ReflectionProperty($mutex, '_lock_acquired');
-            $lock_acquired->setAccessible(true);
             $ts1 = microtime(true);
             $this->assertTrue($mutex->get_lock(0));
             $reflection = new \ReflectionProperty($mutex, '_file_handler');
             $reflection->setAccessible(true);
             $this->assertNotFalse($reflection->getValue($mutex));
             $this->assertNotNull($reflection->getValue($mutex));
-            $this->assertTrue($lock_acquired->getValue($mutex));
+            $this->assertTrue($mutex->is_acquired());
             $this->assertTrue($mutex->get_lock(0));
             $this->assertNotNull($mutex->get_acquired_time());
             $this->assertLessThan(microtime(true), $mutex->get_acquired_time());
@@ -142,7 +140,7 @@
                 'folder' => $folder,
             ]);
             $this->assertFalse($mutex1->get_lock(0.01));
-            $this->assertFalse($lock_acquired->getValue($mutex1));
+            $this->assertFalse($mutex1->is_acquired());
             //
             $mutex1 = new FileMutex([
                 'name' => 'nyan',
@@ -150,6 +148,7 @@
                 'folder' => $folder,
             ]);
             $this->assertFalse($mutex1->get_lock(2));
+            $this->assertFalse($mutex1->is_acquired());
 
             //
             for ($i = 0; $i < 5; $i++) {
@@ -200,13 +199,12 @@
                 'folder' => $folder,
             ]);
             $this->assertTrue($mutex->get_lock(0));
+            $this->assertTrue($mutex->is_acquired());
 
             $mutex->release_lock();
             $reflection = new \ReflectionProperty($mutex, '_file_handler');
             $reflection->setAccessible(true);
-            $lock_acquired = new \ReflectionProperty($mutex, '_lock_acquired');
-            $lock_acquired->setAccessible(true);
-            $this->assertFalse($lock_acquired->getValue($mutex));
+            $this->assertFalse($mutex->is_acquired());
             $this->assertFalse($reflection->getValue($mutex));
             $this->assertFileExists($mutex->filename);
 
@@ -217,6 +215,7 @@
             ]);
             $this->assertTrue($mutex->get_lock(0));
             $this->assertTrue($mutex->get_lock(0));
+            $this->assertTrue($mutex->is_acquired());
             $delete_on_release = new \ReflectionProperty($mutex, '_delete_on_release');
             $delete_on_release->setAccessible(true);
             $delete_on_release->setValue($mutex, true);
@@ -294,6 +293,7 @@
             $this->assertTrue($mutex->is_free());
             $this->assertFileExists($mutex->filename);
             $mutex->get_lock(0);
+            $this->assertTrue($mutex->is_acquired());
             $this->assertFalse($mutex->is_free());
             $mutex1 = new FileMutex([
                 'name' => 'nyan',
@@ -303,6 +303,7 @@
             $this->assertFalse($mutex1->is_free());
             $mutex->release_lock();
             $this->assertTrue($mutex->is_free());
+            $this->assertFalse($mutex->is_acquired());
             unlink($mutex->filename);
 
             //

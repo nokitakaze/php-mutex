@@ -27,6 +27,11 @@
          * @return boolean
          */
         function is_free();
+
+        /**
+         * @return boolean
+         */
+        function is_acquired();
     }
 
 ?>

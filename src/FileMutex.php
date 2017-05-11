@@ -224,6 +224,13 @@
         function get_delete_on_release() {
             return $this->_delete_on_release;
         }
+
+        /**
+         * @return boolean
+         */
+        function is_acquired() {
+            return $this->_lock_acquired;
+        }
     }
 
 ?>
