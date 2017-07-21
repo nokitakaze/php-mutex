@@ -58,7 +58,9 @@
             }
 
             $prefix = '';
-            if ($this->_mutex_type == self::SERVER) {
+            if (isset($settings->prefix)) {
+                $prefix = $settings->prefix;
+            } elseif ($this->_mutex_type == self::SERVER) {
                 $prefix = hash('sha512', self::getDomainString()).'_';
             } elseif ($this->_mutex_type == self::DIRECTORY) {
                 $prefix = hash('sha512', strtolower(self::getDirectoryString())).'_';
@@ -76,8 +78,8 @@
         static function getDomainString() {
             if (isset($_SERVER['HTTP_HOST']) and ($_SERVER['HTTP_HOST'] != '')) {
                 return $_SERVER['HTTP_HOST'];
-            } elseif (isset($_SERVER['HOSTNAME']) and ($_SERVER['HOSTNAME'] != '')) {
-                return $_SERVER['HOSTNAME'];
+            } elseif (gethostname() != '') {
+                return gethostname();
             } elseif (isset($_SERVER['SCRIPT_NAME'])) {
                 return $_SERVER['SCRIPT_NAME'];
             } else {
@@ -94,7 +96,7 @@
             } elseif (isset($_SERVER['PWD']) and ($_SERVER['PWD'] != '')) {
                 return $_SERVER['PWD'];
             } elseif (isset($_SERVER['SCRIPT_NAME'])) {
-                return $_SERVER['SCRIPT_NAME'];
+                return dirname($_SERVER['SCRIPT_NAME']);
             } else {
                 return 'none';
             }

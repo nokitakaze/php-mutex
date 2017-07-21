@@ -4,7 +4,10 @@
 
     class SmartMutexTest extends \PHPUnit_Framework_TestCase {
         function test__construct() {
-            $values = [];
+            $values1 = [];
+            $values2 = [];
+            $values3 = [];
+            $values4 = [];
             foreach (['nyan', 'pasu'] as &$name1) {
                 foreach ([MutexInterface::DOMAIN,
                           MutexInterface::DIRECTORY,
@@ -15,13 +18,56 @@
                             'type' => $type1,
                             'folder' => $folder1,
                         ]);
-                        $this->assertNotContains($mutex->filename, $values);
+                        $this->assertNotEquals('', $mutex->filename);
+                        $this->assertNotContains($mutex->filename, $values1);
+                        $values1[] = $mutex->filename;
                         $this->assertEquals($name1, $mutex->get_mutex_name());
                         $this->assertFalse($mutex->get_delete_on_release());
                     }
                 }
+
+                foreach (['', 'prefix_'] as $prefix) {
+                    foreach ([null, '/nyan/pasu1', '/foo/bar1'] as &$folder1) {
+                        $mutex = new FileMutex([
+                            'name' => $name1,
+                            'prefix' => $prefix,
+                            'folder' => $folder1,
+                        ]);
+                        $this->assertNotEquals('', $mutex->filename);
+                        if (!in_array($mutex->filename, ['/tmp/smartmutex_nyan.lock', '/tmp/smartmutex_pasu.lock'])) {
+                            $this->assertNotContains($mutex->filename, $values2);
+                            $values2[] = $mutex->filename;
+                        }
+                        $this->assertEquals($name1, $mutex->get_mutex_name());
+                        $this->assertFalse($mutex->get_delete_on_release());
+                    }
+                }
+
+                foreach ([MutexInterface::DOMAIN,
+                          MutexInterface::DIRECTORY,
+                          MutexInterface::SERVER] as &$type1) {
+                    $mutex = new FileMutex([
+                        'name' => $name1,
+                        'type' => $type1,
+                    ]);
+                    $this->assertNotEquals('', $mutex->filename);
+                    $this->assertNotContains($mutex->filename, $values3);
+                    $values3[] = $mutex->filename;
+                    $this->assertEquals($name1, $mutex->get_mutex_name());
+                    $this->assertFalse($mutex->get_delete_on_release());
+                }
+
+                {
+                    $mutex = new FileMutex([
+                        'name' => $name1,
+                    ]);
+                    $this->assertNotEquals('', $mutex->filename);
+                    $this->assertNotContains($mutex->filename, $values4);
+                    $values4[] = $mutex->filename;
+                    $this->assertEquals($name1, $mutex->get_mutex_name());
+                    $this->assertFalse($mutex->get_delete_on_release());
+                }
             }
-            unset($values);
         }
 
         /**
@@ -34,10 +80,6 @@
             } else {
                 $this->assertNotEquals('', FileMutex::getDomainString());
             }
-            if (!isset($_SERVER['HOSTNAME'])) {
-                $_SERVER['HOSTNAME'] = 'example.com';
-            }
-            $this->assertNotEquals('', FileMutex::getDomainString());
             $_SERVER['HTTP_HOST'] = 'example.com';
             foreach (['HTTP_HOST', 'HOSTNAME', 'SCRIPT_NAME'] as $id => $key) {
                 $this->assertNotEquals('', FileMutex::getDomainString());
@@ -56,10 +98,18 @@
             $_SERVER['DOCUMENT_ROOT'] = '/dev/shm/nyanpasu';
             foreach (['DOCUMENT_ROOT', 'PWD', 'SCRIPT_NAME'] as $id => $key) {
                 $this->assertNotEquals('', FileMutex::getDirectoryString());
+                if (!in_array(FileMutex::getDirectoryString(), ['none', '/dev/shm/nyanpasu'])) {
+                    $this->assertFileExists(FileMutex::getDirectoryString());
+                    $this->assertTrue(is_dir(FileMutex::getDirectoryString()));
+                }
                 unset($_SERVER[$key]);
             }
             $this->assertNotNull(FileMutex::getDirectoryString());
             $this->assertNotEquals('', FileMutex::getDomainString());
+            if (!in_array(FileMutex::getDirectoryString(), ['none', '/dev/shm/nyanpasu'])) {
+                $this->assertFileExists(FileMutex::getDirectoryString());
+                $this->assertTrue(is_dir(FileMutex::getDirectoryString()));
+            }
 
             $_SERVER = $server_original;
         }
