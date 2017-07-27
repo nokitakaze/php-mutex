@@ -114,6 +114,9 @@
             $_SERVER = $server_original;
         }
 
+        // @todo проверять, что type меняется правильно, когда он SERVER, DIRECTORY & DOMAIN
+        // Он должен менять мьютекс, когда отличается домен, если DOMAIN
+
         function testGet_lock() {
             do {
                 $folder = sys_get_temp_dir().'/nkt_test_';

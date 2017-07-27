@@ -60,7 +60,7 @@
             $prefix = '';
             if (isset($settings->prefix)) {
                 $prefix = $settings->prefix;
-            } elseif ($this->_mutex_type == self::SERVER) {
+            } elseif ($this->_mutex_type == self::DOMAIN) {
                 $prefix = hash('sha512', self::getDomainString()).'_';
             } elseif ($this->_mutex_type == self::DIRECTORY) {
                 $prefix = hash('sha512', strtolower(self::getDirectoryString())).'_';
