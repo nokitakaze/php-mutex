@@ -233,6 +233,36 @@
         function is_acquired() {
             return $this->_lock_acquired;
         }
+
+        /**
+         * @param string $path
+         *
+         * @throws \NokitaKaze\Mutex\MutexException
+         */
+        static function create_folders_in_path($path) {
+            $path = rtrim(str_replace('\\', '/', $path), '/');
+            do {
+                $old_path = $path;
+                $path = str_replace('//', '/', str_replace('/./', '/', $path));
+            } while ($path != $old_path);
+            do {
+                $path = preg_replace('_/([^/]+?)/../_', '/', $path, -1, $count);
+            } while ($count > 0);
+            unset($old_path, $count);
+
+            $chunks = explode('/', $path);
+            unset($path);
+            $full_path = '';
+            foreach ($chunks as $chunk) {
+                // @hint Такая логика из-за структуры файловой системы Windows
+                $full_path = str_replace('//', '/', $full_path.'/'.$chunk);
+                if (!file_exists($full_path) and !@mkdir($full_path)) {
+                    throw new MutexException('Can not create folder');
+                } elseif (!is_dir($full_path)) {
+                    throw new MutexException($full_path.' is not a directory');
+                }
+            }
+        }
     }
 
 ?>

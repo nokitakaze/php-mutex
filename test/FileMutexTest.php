@@ -382,6 +382,79 @@
                 $this->fail('SmartMutex did not throw exception on non writable file');
             }
         }
+
+        function dataCreate_folders_in_path() {
+            $tmp_folder = sys_get_temp_dir();
+
+            $data = [
+                [$tmp_folder.'/nkt_mutex_test_'.mt_rand(1, 1000000), null],
+                [$tmp_folder.'/nkt_mutex_test_'.mt_rand(1, 1000000).'/'.mt_rand(0, 1000000).'/'.mt_rand(0, 1000000), null],
+            ];
+
+            $folder = $tmp_folder.'/nkt_mutex_test_'.mt_rand(1, 1000000).'/'.mt_rand(0, 1000000);
+            $postfix = mt_rand(0, 1000000);
+            $data[] = [$folder.'/./'.$postfix, $folder.'/'.$postfix];
+
+            $folder = $tmp_folder.'/nkt_mutex_test_'.mt_rand(1, 1000000).'/'.mt_rand(0, 1000000);
+            $postfix = mt_rand(0, 1000000);
+            $data[] = [$folder.'/'.mt_rand(0, 1000000).'/../'.$postfix, $folder.'/'.$postfix];
+
+            $folder = $tmp_folder.'/nkt_mutex_test_'.mt_rand(1, 1000000).'/'.mt_rand(0, 1000000);
+            $postfix = mt_rand(0, 1000000);
+            $data[] = [$folder.'/'.mt_rand(0, 1000000).'/'.mt_rand(0, 1000000).'/../../'.$postfix, $folder.'/'.$postfix];
+
+            return $data;
+        }
+
+        /**
+         * @param string $string
+         * @param string $real_path
+         *
+         * @dataProvider dataCreate_folders_in_path
+         */
+        function testCreate_folders_in_path($string, $real_path = null) {
+            if (is_null($real_path)) {
+                $real_path = $string;
+            }
+            FileMutex::create_folders_in_path($string);
+            $this->assertFileExists($real_path);
+            $this->assertTrue(is_dir($real_path));
+            exec(sprintf('rm -rf %s', escapeshellarg($real_path)));
+        }
+
+        function testCreate_folders_in_path_exception1() {
+            if (file_exists('/proc')) {
+                $folder = '/proc/nkt_mutex_test_'.mt_rand(1, 1000000);
+            } else {
+                $folder = '/root/nkt_mutex_test_'.mt_rand(1, 1000000);
+            }
+
+            $u = false;
+            try {
+                FileMutex::create_folders_in_path($folder);
+            } catch (MutexException $e) {
+                $u = true;
+            }
+            $this->assertTrue($u, 'FileMutex did not raise exception on non writable folder');
+            $this->assertFileNotExists($folder);
+        }
+
+        function testCreate_folders_in_path_exception2() {
+            if (file_exists('/proc')) {
+                $filename = sys_get_temp_dir().'/nkt_mutex_test_'.mt_rand(1, 1000000).'.tmp';
+            } else {
+                $filename = sys_get_temp_dir().'/nkt_mutex_test_'.mt_rand(1, 1000000).'.tmp';
+            }
+            $this->assertTrue(touch($filename));
+
+            $u = false;
+            try {
+                FileMutex::create_folders_in_path($filename.'/nkt_mutex_test_'.mt_rand(1, 1000000));
+            } catch (MutexException $e) {
+                $u = true;
+            }
+            $this->assertTrue($u, 'FileMutex did not raise exception on file in filepath');
+        }
     }
 
 ?>
