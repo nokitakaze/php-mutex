@@ -70,6 +70,27 @@
             }
         }
 
+        function testDelete_on_release() {
+            do {
+                $folder = sys_get_temp_dir().'/nkt_mutex_test_';
+                for ($i = 0; $i < 10; $i++) {
+                    $folder .= chr(mt_rand(ord('a'), ord('z')));
+                }
+            } while (file_exists($folder));
+            $mutex = new FileMutex([
+                'name' => 'foobar',
+                'type' => MutexInterface::SERVER,
+                'delete_on_release' => true,
+                'folder' => $folder,
+            ]);
+            $this->assertTrue($mutex->get_delete_on_release());
+            $this->assertTrue($mutex->get_lock(0));
+            $this->assertTrue($mutex->get_lock(0));
+            $this->assertTrue($mutex->is_acquired());
+            $mutex->release_lock();
+            $this->assertFileNotExists($mutex->filename);
+        }
+
         /**
          * @backupGlobals
          */
@@ -119,7 +140,7 @@
 
         function testGet_lock() {
             do {
-                $folder = sys_get_temp_dir().'/nkt_test_';
+                $folder = sys_get_temp_dir().'/nkt_mutex_test_';
                 for ($i = 0; $i < 10; $i++) {
                     $folder .= chr(mt_rand(ord('a'), ord('z')));
                 }
@@ -271,7 +292,7 @@
 
         function testIs_free() {
             do {
-                $folder = sys_get_temp_dir().'/nkt_test_';
+                $folder = sys_get_temp_dir().'/nkt_mutex_test_';
                 for ($i = 0; $i < 10; $i++) {
                     $folder .= chr(mt_rand(ord('a'), ord('z')));
                 }
@@ -444,6 +465,19 @@
                 $u = true;
             }
             $this->assertTrue($u, 'FileMutex did not raise exception on file in filepath');
+        }
+
+        /**
+         * @covers \NokitaKaze\Mutex\FileMutex::get_last_php_error_as_string
+         */
+        function testGet_last_php_error_as_string() {
+            if (PHP_MAJOR_VERSION >= 7) {
+                error_clear_last();
+                $this->assertEmpty(FileMutex::get_last_php_error_as_string());
+            }
+
+            @trigger_error('Nyan Pasu Test Mutex');
+            $this->assertRegExp('_Nyan Pasu Test Mutex_', FileMutex::get_last_php_error_as_string());
         }
     }
 

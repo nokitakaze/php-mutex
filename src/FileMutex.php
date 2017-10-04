@@ -234,6 +234,19 @@
         }
 
         /**
+         * @return string
+         */
+        static function get_last_php_error_as_string() {
+            $error = error_get_last();
+            if (empty($error)) {
+                return '';
+            }
+
+            return sprintf('%s%s', $error['message'],
+                isset($error['code']) ? ' (#'.$error['code'].')' : '');
+        }
+
+        /**
          * @param string $path
          *
          * @throws \NokitaKaze\Mutex\MutexException
@@ -256,7 +269,10 @@
                 // @hint Такая логика из-за структуры файловой системы Windows
                 $full_path = str_replace('//', '/', $full_path.'/'.$chunk);
                 if (!file_exists($full_path) and !@mkdir($full_path)) {
-                    throw new MutexException('Can not create folder');
+                    if (!file_exists($full_path)) {
+                        // Синхронизация, она такая, да
+                        throw new MutexException('Can not create folder: '.self::get_last_php_error_as_string());
+                    }
                 } elseif (!is_dir($full_path)) {
                     throw new MutexException($full_path.' is not a directory');
                 }
