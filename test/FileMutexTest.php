@@ -8,11 +8,11 @@
             $values2 = [];
             $values3 = [];
             $values4 = [];
-            foreach (['nyan', 'pasu'] as &$name1) {
+            foreach (['nyan', 'pasu'] as $name1) {
                 foreach ([MutexInterface::DOMAIN,
                           MutexInterface::DIRECTORY,
-                          MutexInterface::SERVER] as &$type1) {
-                    foreach ([null, '/nyan/pasu', '/foo/bar'] as &$folder1) {
+                          MutexInterface::SERVER] as $type1) {
+                    foreach ([null, '/nyan/pasu', '/foo/bar'] as $folder1) {
                         $mutex = new FileMutex([
                             'name' => $name1,
                             'type' => $type1,
@@ -27,7 +27,7 @@
                 }
 
                 foreach (['', 'prefix_'] as $prefix) {
-                    foreach ([null, '/nyan/pasu1', '/foo/bar1'] as &$folder1) {
+                    foreach ([null, '/nyan/pasu1', '/foo/bar1'] as $folder1) {
                         $mutex = new FileMutex([
                             'name' => $name1,
                             'prefix' => $prefix,
@@ -45,7 +45,7 @@
 
                 foreach ([MutexInterface::DOMAIN,
                           MutexInterface::DIRECTORY,
-                          MutexInterface::SERVER] as &$type1) {
+                          MutexInterface::SERVER] as $type1) {
                     $mutex = new FileMutex([
                         'name' => $name1,
                         'type' => $type1,
