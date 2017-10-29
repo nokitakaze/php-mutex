@@ -479,6 +479,30 @@
             @trigger_error('Nyan Pasu Test Mutex');
             $this->assertRegExp('_Nyan Pasu Test Mutex_', FileMutex::get_last_php_error_as_string());
         }
+
+        function dataSanify_path() {
+            return [
+                ['/dev/shm/', '/dev/shm'],
+                ['/dev/shm/aa/', '/dev/shm/aa'],
+                ['/dev/shm/..', '/dev'],
+                ['/dev/shm/../', '/dev'],
+                ['/dev/shm/.', '/dev/shm'],
+                ['/dev/shm/./', '/dev/shm'],
+                ['/dev/shm//aa', '/dev/shm/aa'],
+                ['/dev/shm/../bb/cc', '/dev/bb/cc'],
+                ['c:\\fakepath\\', 'c:/fakepath'],
+            ];
+        }
+
+        /**
+         * @param string $input
+         * @param string $expected
+         *
+         * @dataProvider dataSanify_path
+         */
+        function testSanify_path($input, $expected) {
+            $this->assertEquals($expected, FileMutex::sanify_path($input));
+        }
     }
 
 ?>

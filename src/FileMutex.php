@@ -249,21 +249,29 @@
         /**
          * @param string $path
          *
-         * @throws \NokitaKaze\Mutex\MutexException
+         * @return string
          */
-        static function create_folders_in_path($path) {
-            $path = rtrim(str_replace('\\', '/', $path), '/');
+        static function sanify_path($path) {
+            $path = rtrim(str_replace('\\', '/', $path), '/').'/';
             do {
                 $old_path = $path;
                 $path = str_replace('//', '/', str_replace('/./', '/', $path));
             } while ($path != $old_path);
             do {
-                $path = preg_replace('_/([^/]+?)/../_', '/', $path, -1, $count);
+                $path = preg_replace('_/([^/]+?)/\\.\\./_', '/', $path, -1, $count);
             } while ($count > 0);
-            unset($old_path, $count);
+            $path = rtrim($path, '/');
 
-            $chunks = explode('/', $path);
-            unset($path);
+            return $path;
+        }
+
+        /**
+         * @param string $path
+         *
+         * @throws \NokitaKaze\Mutex\MutexException
+         */
+        static function create_folders_in_path($path) {
+            $chunks = explode('/', self::sanify_path($path));
             $full_path = '';
             foreach ($chunks as $chunk) {
                 // @hint Такая логика из-за структуры файловой системы Windows
