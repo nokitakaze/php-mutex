@@ -422,6 +422,7 @@
          * @param string $real_path
          *
          * @dataProvider dataCreate_folders_in_path
+         * @throws \NokitaKaze\Mutex\MutexException
          */
         function testCreate_folders_in_path($string, $real_path = null) {
             if (is_null($real_path)) {
