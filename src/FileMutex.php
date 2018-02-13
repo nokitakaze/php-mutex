@@ -276,6 +276,7 @@
             foreach ($chunks as $chunk) {
                 // @hint Такая логика из-за структуры файловой системы Windows
                 $full_path = str_replace('//', '/', $full_path.'/'.$chunk);
+                // @hint warning всё равно пойдет в error handler
                 if (!file_exists($full_path) and !@mkdir($full_path)) {
                     if (!file_exists($full_path)) {
                         // Синхронизация, она такая, да
