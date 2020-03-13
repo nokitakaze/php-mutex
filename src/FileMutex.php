@@ -2,7 +2,8 @@
 
     namespace NokitaKaze\Mutex;
 
-    class FileMutex implements MutexInterface {
+    class FileMutex implements MutexInterface
+    {
         /**
          * @var string Название файла, на котором будет работать мьютекс
          */
@@ -38,11 +39,12 @@
         /**
          * @param MutexSettings|array $settings
          */
-        function __construct($settings) {
+        function __construct($settings)
+        {
             /**
              * @var MutexSettings $settings
              */
-            $settings = (object) $settings;
+            $settings = (object)$settings;
             if (!isset($settings->type)) {
                 $settings->type = null;
             }
@@ -68,14 +70,16 @@
             $this->filename = $this->_mutex_folder.DIRECTORY_SEPARATOR.'smartmutex_'.$prefix.$this->_mutex_name.'.lock';
         }
 
-        function __destruct() {
+        function __destruct()
+        {
             $this->release_lock();
         }
 
         /**
          * @return string
          */
-        static function getDomainString() {
+        static function getDomainString()
+        {
             if (isset($_SERVER['HTTP_HOST']) and ($_SERVER['HTTP_HOST'] != '')) {
                 return $_SERVER['HTTP_HOST'];
             } elseif (gethostname() != '') {
@@ -90,7 +94,8 @@
         /**
          * @return string
          */
-        static function getDirectoryString() {
+        static function getDirectoryString()
+        {
             if (isset($_SERVER['DOCUMENT_ROOT']) and ($_SERVER['DOCUMENT_ROOT'] != '')) {
                 return $_SERVER['DOCUMENT_ROOT'];
             } elseif (isset($_SERVER['PWD']) and ($_SERVER['PWD'] != '')) {
@@ -107,7 +112,8 @@
          *
          * @throws MutexException
          */
-        function is_free() {
+        function is_free()
+        {
             if ($this->_lock_acquired) {
                 return false;
             }
@@ -135,7 +141,8 @@
          * @return bool
          * @throws MutexException
          */
-        function get_lock($time = -1) {
+        function get_lock($time = -1)
+        {
             $tmp_time = microtime(true);
             if ($this->_lock_acquired) {
                 return true;
@@ -155,6 +162,7 @@
             while (($this->_file_handler === false) and (
                     ($tmp_time + $time >= microtime(true)) or ($time == -1)
                 )) {
+                // Active locks. Yes, this is programming language we have
                 usleep(10000);
                 $this->_file_handler = fopen($this->filename, 'ab');
             }
@@ -166,7 +174,6 @@
             if ($time >= 0) {
                 $result = flock($this->_file_handler, LOCK_EX | LOCK_NB);
                 while (!$result and ($tmp_time + $time >= microtime(true))) {
-                    // U MAD?
                     usleep(10000);
                     $result = flock($this->_file_handler, LOCK_EX | LOCK_NB);
                 }
@@ -176,8 +183,7 @@
 
             if ($result) {
                 $this->_lock_acquired_time = microtime(true);
-                // @todo Не работает под Windows
-                fwrite($this->_file_handler, posix_getpid()."\n".microtime(true)."\n".posix_getuid()."\n\n");
+                fwrite($this->_file_handler, self::getpid()."\n".microtime(true)."\n".self::getuid()."\n\n");
                 fflush($this->_file_handler);
                 $this->_lock_acquired = true;
             } else {
@@ -188,7 +194,8 @@
             return $result;
         }
 
-        function release_lock() {
+        function release_lock()
+        {
             if (!$this->_lock_acquired) {
                 return;
             }
@@ -208,35 +215,40 @@
         /**
          * @return double|null
          */
-        function get_acquired_time() {
+        function get_acquired_time()
+        {
             return $this->_lock_acquired_time;
         }
 
         /**
          * @return string
          */
-        function get_mutex_name() {
+        function get_mutex_name()
+        {
             return $this->_mutex_name;
         }
 
         /**
          * @return boolean
          */
-        function get_delete_on_release() {
+        function get_delete_on_release()
+        {
             return $this->_delete_on_release;
         }
 
         /**
          * @return boolean
          */
-        function is_acquired() {
+        function is_acquired()
+        {
             return $this->_lock_acquired;
         }
 
         /**
          * @return string
          */
-        static function get_last_php_error_as_string() {
+        static function get_last_php_error_as_string()
+        {
             $error = error_get_last();
             if (empty($error)) {
                 return '';
@@ -251,7 +263,8 @@
          *
          * @return string
          */
-        static function sanify_path($path) {
+        static function sanify_path($path)
+        {
             $path = rtrim(str_replace('\\', '/', $path), '/').'/';
             do {
                 $old_path = $path;
@@ -270,12 +283,17 @@
          *
          * @throws \NokitaKaze\Mutex\MutexException
          */
-        static function create_folders_in_path($path) {
+        static function create_folders_in_path($path)
+        {
             $chunks = explode('/', self::sanify_path($path));
             $full_path = '';
             foreach ($chunks as $chunk) {
-                // @hint Такая логика из-за структуры файловой системы Windows
                 $full_path = str_replace('//', '/', $full_path.'/'.$chunk);
+                if (DIRECTORY_SEPARATOR === '\\') {
+                    // Удаляем ведущие слеши на Windows. Не важно абсолютный путь или относительный,
+                    // но ведущий слеш надо удалять
+                    $full_path = ltrim($full_path, '/');
+                }
                 // @hint warning всё равно пойдет в error handler
                 if (!file_exists($full_path) and !@mkdir($full_path)) {
                     if (!file_exists($full_path)) {
@@ -286,6 +304,16 @@
                     throw new MutexException($full_path.' is not a directory');
                 }
             }
+        }
+
+        static function getpid()
+        {
+            return function_exists('posix_getpid') ? posix_getpid() : getmypid();
+        }
+
+        static function getuid()
+        {
+            return function_exists('posix_getuid') ? posix_getuid() : getmyuid();
         }
     }
 
