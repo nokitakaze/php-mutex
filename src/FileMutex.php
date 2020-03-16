@@ -285,29 +285,22 @@ class FileMutex implements MutexInterface
 
     /**
      * @param string $path
+     * @param int    $permissions
      *
      * @throws \NokitaKaze\Mutex\MutexException
      */
-    public static function create_folders_in_path(string $path)
+    public static function create_folders_in_path(string $path, $permissions = 7 << 6)
     {
-        $chunks = explode('/', self::sanify_path($path));
-        $full_path = '';
-        foreach ($chunks as $chunk) {
-            $full_path = str_replace('//', '/', $full_path . '/' . $chunk);
-            if (DIRECTORY_SEPARATOR === '\\') {
-                // Удаляем ведущие слеши на Windows. Не важно абсолютный путь или относительный,
-                // но ведущий слеш надо удалять
-                $full_path = ltrim($full_path, '/');
+        if (file_exists($path)) {
+            if (!is_dir($path)) {
+                throw new MutexException($path . ' is not a directory');
             }
-            // @hint warning всё равно пойдет в error handler
-            if (!file_exists($full_path) and !@mkdir($full_path)) {
-                if (!file_exists($full_path)) {
-                    // Синхронизация, она такая, да
-                    throw new MutexException('Can not create folder: ' . self::get_last_php_error_as_string());
-                }
-            } elseif (!is_dir($full_path)) {
-                throw new MutexException($full_path . ' is not a directory');
-            }
+
+            return;
+        }
+
+        if (!@mkdir($path, $permissions, true)) {
+            throw new MutexException('Can not create folder: ' . self::get_last_php_error_as_string());
         }
     }
 
