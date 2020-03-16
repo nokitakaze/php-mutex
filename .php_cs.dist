@@ -1,0 +1,31 @@
+<?php
+return PhpCsFixer\Config::create()
+    ->setRules([
+        '@PSR2' => true,
+        'array_syntax' => ['syntax' => 'short'],
+        'concat_space' => ['spacing' => 'one'],
+        'ordered_imports' => [
+            'imports_order' => ['class', 'function', 'const'],
+        ],
+        'declare_strict_types' => true,
+        'psr0' => true,
+        'psr4' => true,
+        'yoda_style' => false,
+        'phpdoc_no_useless_inheritdoc' => false,
+        'phpdoc_to_comment' => false,
+        'phpdoc_align' => [
+            'tags' => ['param', 'return', 'throws', 'type', 'var'],
+        ],
+    ])
+    ->setRiskyAllowed(true)
+    ->setLineEnding((file_exists(".git") && (DIRECTORY_SEPARATOR == "/")) ? "\n" : "\r\n")
+    ->setFinder(
+        PhpCsFixer\Finder::create()
+            ->in(__DIR__)
+            ->exclude([
+                'vendor',
+            ])
+            ->notPath([
+                'src/phpdoc.php',
+            ])
+    );

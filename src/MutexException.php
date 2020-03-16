@@ -1,9 +1,7 @@
-<?php
+<?php declare(strict_types=1);
 
-    namespace NokitaKaze\Mutex;
+namespace NokitaKaze\Mutex;
 
-    class MutexException extends \Exception {
-
-    }
-
-?>
+class MutexException extends \Exception
+{
+}
